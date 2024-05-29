@@ -19,8 +19,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserStorage userStorage;
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
     public List<UserDto> getAll() {
         return userStorage.getAll().stream().map(userMapper::toUserDto).collect(Collectors.toList());

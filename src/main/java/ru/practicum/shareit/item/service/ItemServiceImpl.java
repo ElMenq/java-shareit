@@ -19,8 +19,8 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
 
     private final ItemStorage itemStorage;
-    @Autowired
-    private ItemMapper itemMapper;
+
+    private final ItemMapper itemMapper;
 
     @Override
     public ItemDto addNewItem(long userId, ItemDto itemDto) {
@@ -33,10 +33,14 @@ public class ItemServiceImpl implements ItemService {
         if (itemDto.getName() == null || itemDto.getName().isBlank()) {
             log.info("В предмете {} не указано наименование", itemDto);
             throw new ValidationException();
-        } else if (itemDto.getDescription() == null || itemDto.getDescription().isBlank()) {
+        }
+
+        if (itemDto.getDescription() == null || itemDto.getDescription().isBlank()) {
             log.info("В предмете {} не указано описание", itemDto);
             throw new ValidationException();
-        } else if (itemDto.getAvailable() == null) {
+        }
+
+        if (itemDto.getAvailable() == null) {
             log.info("В предмете {} не указан статус доступности", itemDto);
             throw new ValidationException();
         }

@@ -23,8 +23,7 @@ public class InMemoryItemStorage implements ItemStorage {
     private final HashMap<Long, Item> items = new HashMap<>();
     private long itemId;
     private final UserServiceImpl userService;
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
     @Override
     public Item addNewItem(long userId, Item item) {

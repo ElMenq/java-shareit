@@ -53,11 +53,11 @@ public class InMemoreUserStorage implements UserStorage {
     public User getUser(long userId) {
         if (userId == 0) {
             throw new ValidationException();
-        } else if (users.containsKey(userId)) {
-            return users.get(userId);
-        } else {
+        }
+        if (!users.containsKey(userId)) {
             throw new NotFoundException();
         }
+        return users.get(userId);
     }
 
     @Override
