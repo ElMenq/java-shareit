@@ -2,7 +2,6 @@ package ru.practicum.shareit.item.dto;
 
 import lombok.Builder;
 import lombok.Data;
-import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingForItemDto;
 
 import java.util.List;
@@ -18,10 +17,5 @@ public class ItemDto {
     private BookingForItemDto lastBooking;
     private BookingForItemDto nextBooking;
     private List<CommentDto> comments;
-    private List<BookingDto> bookings; // Добавляем поле для списка бронирований
 
-    // Метод для установки списка бронирований
-    public void setBookingsList(List<BookingDto> bookings) {
-        this.bookings = bookings;
-    }
 }
