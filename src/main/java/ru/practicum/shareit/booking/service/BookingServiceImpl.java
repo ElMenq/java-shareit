@@ -50,7 +50,15 @@ public class BookingServiceImpl implements BookingService {
         UserDto userDto = userService.getUser(userId);
         validateBookingDate(userId, bookingFromUser);
         ItemDto itemDto = getValidatedBookingItem(userId, bookingFromUser);
-        Booking booking = bookingMapper.toBooking(bookingFromUser, userDto, itemDto);
+        LocalDateTime start = bookingFromUser.getStart();
+        LocalDateTime end = bookingFromUser.getEnd();
+        Booking booking = Booking.builder()
+                .booker(userMapper.toUser(userDto))
+                .item(itemMapper.toItem(itemDto))
+                .start(start)
+                .end(end)
+                .status(BookingStatus.WAITING)
+                .build();
         Booking savedBooking = bookingRepository.save(booking);
         log.info("Добавлено новое бронирование {} от user id={}", savedBooking, userId);
         return bookingMapper.toBookingDto(savedBooking);
