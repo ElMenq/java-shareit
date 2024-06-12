@@ -123,6 +123,7 @@ public class ItemServiceImpl implements ItemService {
                 LocalDateTime.now(),
                 BookingStatus.APPROVED);
         itemDto.setLastBooking(bookingMapper.toBookingForItemDto(lastBooking.orElse(null)));
+
         Optional<Booking> nextBooking = bookingRepository.findFirst1ByItemIdIsAndStartIsAfterAndStatusIsOrderByStartAsc(
                 itemId,
                 LocalDateTime.now(),
@@ -142,15 +143,14 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> getOwnerItems(long userId) {
         List<Item> ownerItems = itemRepository.findAllByOwnerId(userId);
-        List<ItemDto> listItemDto = new ArrayList<>();
-        for (Item item : ownerItems) {
-            ItemDto itemDto = itemMapper.toItemDto(item);
-            if (item.getOwner().getId().equals(userId)) {
-                addBookings(itemDto);
-            }
-            addComments(itemDto);
-            listItemDto.add(itemDto);
-        }
+        List<ItemDto> listItemDto = ownerItems.stream()
+                .map(item -> {
+                    ItemDto itemDto = itemMapper.toItemDto(item);
+                    addBookings(itemDto);
+                    addComments(itemDto);
+                    return itemDto;
+                })
+                .collect(Collectors.toList());
         return listItemDto;
     }
 
