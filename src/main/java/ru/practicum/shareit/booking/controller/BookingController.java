@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.enums.BookingState;
 
 import java.util.List;
 
@@ -46,15 +47,27 @@ public class BookingController {
     @GetMapping
     public ResponseEntity<List<BookingDto>> getUserBookings(@RequestHeader(value = "X-Sharer-User-Id") long userId,
                                                             @RequestParam(defaultValue = "ALL") String state) {
-        log.info("Received GET-request at /bookings?state={} endpoint from user id={}", state, userId);
-        return ResponseEntity.ok().body(bookingService.getUserBookings(userId, state));
+        log.info("Received GET-request at /bookings endpoint from user id={} with state={}", userId, state);
+        BookingState bookingState = resolveBookingState(state);
+        List<BookingDto> bookings = bookingService.getUserBookings(userId, bookingState);
+        return ResponseEntity.ok().body(bookings);
     }
 
     @GetMapping("/owner")
     public ResponseEntity<List<BookingDto>> getItemsOwnerBookings(@RequestHeader(value = "X-Sharer-User-Id") long userId,
                                                                   @RequestParam(defaultValue = "ALL") String state) {
-        log.info("Received GET-request at /bookings/owner?state={} endpoint from user id={}", state, userId);
-        return ResponseEntity.ok().body(bookingService.getItemsOwnerBookings(userId, state));
+        log.info("Received GET-request at /bookings/owner endpoint from user id={} with state={}", userId, state);
+        BookingState bookingState = resolveBookingState(state);
+        List<BookingDto> bookings = bookingService.getItemsOwnerBookings(userId, bookingState);
+        return ResponseEntity.ok().body(bookings);
+    }
+
+    private BookingState resolveBookingState(String state) {
+        try {
+            return BookingState.valueOf(state.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unknown state: " + state);
+        }
     }
 
 }

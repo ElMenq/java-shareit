@@ -175,16 +175,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getUserBookings(long userId, String state) {
+    public List<BookingDto> getUserBookings(long userId, BookingState state) {
         User user = userMapper.toUser(userService.getUser(userId));
-        BookingState status;
-        try {
-            status = BookingState.valueOf(state);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Unknown state: UNSUPPORTED_STATUS");
-        }
         List<Booking> bookings = new ArrayList<>();
-        switch (status) {
+        switch (state) {
             case ALL:
                 bookings = bookingRepository.findAllByBooker(user, Sort.by("end").descending());
                 break;
@@ -226,16 +220,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getItemsOwnerBookings(long userId, String state) {
+    public List<BookingDto> getItemsOwnerBookings(long userId, BookingState state) {
         User user = userMapper.toUser(userService.getUser(userId));
-        BookingState status;
-        try {
-            status = BookingState.valueOf(state);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Unknown state: UNSUPPORTED_STATUS");
-        }
         List<Booking> bookings = new ArrayList<>();
-        switch (status) {
+        switch (state) {
             case ALL:
                 bookings = bookingRepository.findAllByItemOwnerIs(user, Sort.by("end").descending());
                 break;
