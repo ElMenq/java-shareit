@@ -2,8 +2,6 @@ package ru.practicum.shareit.booking.repo;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.enums.BookingStatus;
@@ -41,11 +39,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findFirst1ByItemIdIsAndStartIsAfterAndStatusIsOrderByStartAsc(long itemId, LocalDateTime start, BookingStatus status);
 
     Optional<Booking> findFirst1ByItemIdAndBookerIdAndEndIsBefore(long itemId, long bookerId, LocalDateTime end);
-
-    @Query("SELECT b FROM Booking b WHERE b.item.id IN :itemIds AND b.start < :now AND b.status = :status ORDER BY b.end DESC")
-    List<Booking> findLastBookingsByItemIds(@Param("itemIds") List<Long> itemIds, @Param("now") LocalDateTime now, @Param("status") BookingStatus status);
-
-    @Query("SELECT b FROM Booking b WHERE b.item.id IN :itemIds AND b.start > :now AND b.status = :status ORDER BY b.start ASC")
-    List<Booking> findNextBookingsByItemIds(@Param("itemIds") List<Long> itemIds, @Param("now") LocalDateTime now, @Param("status") BookingStatus status);
 
 }
