@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
@@ -16,6 +17,7 @@ import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
@@ -46,21 +48,21 @@ public class BookingServiceImpl implements BookingService {
     private UserMapper userMapper;
 
     @Override
+    @Transactional
     public BookingDto addNewBooking(long userId, BookingFromUserDto bookingFromUser) {
         UserDto userDto = userService.getUser(userId);
         validateBookingDate(userId, bookingFromUser);
         ItemDto itemDto = getValidatedBookingItem(userId, bookingFromUser);
         LocalDateTime start = bookingFromUser.getStart();
         LocalDateTime end = bookingFromUser.getEnd();
-        Booking booking = Booking.builder()
-                .booker(userMapper.toUser(userDto))
-                .item(itemMapper.toItem(itemDto))
-                .start(start)
-                .end(end)
-                .status(BookingStatus.WAITING)
-                .build();
+
+        User booker = userMapper.toUser(userDto);
+        Item item = itemMapper.toItem(itemDto);
+
+        Booking booking = bookingMapper.toBooking(booker, item, start, end, BookingStatus.WAITING);
         Booking savedBooking = bookingRepository.save(booking);
         log.info("Добавлено новое бронирование {} от user id={}", savedBooking, userId);
+
         return bookingMapper.toBookingDto(savedBooking);
     }
 
