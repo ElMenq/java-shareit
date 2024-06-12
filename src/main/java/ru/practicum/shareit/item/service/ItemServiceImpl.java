@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repo.BookingRepository;
+import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.enums.BookingState;
 import ru.practicum.shareit.enums.BookingStatus;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -23,9 +26,7 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,6 +36,7 @@ public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
     private final UserService userService;
+    private final BookingService bookingService;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
 
@@ -143,15 +145,35 @@ public class ItemServiceImpl implements ItemService {
     public List<ItemDto> getOwnerItems(long userId) {
         List<Item> ownerItems = itemRepository.findAllByOwnerId(userId);
         List<ItemDto> listItemDto = new ArrayList<>();
+
+        // Получаем все бронирования для всех вещей владельца
+        Map<Long, List<BookingDto>> bookingsMap = getBookingsForOwnerItems(ownerItems);
+
         for (Item item : ownerItems) {
             ItemDto itemDto = itemMapper.toItemDto(item);
-            if (item.getOwner().getId().equals(userId)) {
-                addBookings(itemDto);
-            }
+
+            // Добавляем бронирования для текущей вещи
+            List<BookingDto> bookings = bookingsMap.getOrDefault(item.getId(), Collections.emptyList());
+
+            // Предположим, что у ItemDto есть метод setBookingsList для добавления списка бронирований
+            itemDto.setBookingsList(bookings);
+
+            // Добавляем комментарии для текущей вещи
             addComments(itemDto);
+
             listItemDto.add(itemDto);
         }
         return listItemDto;
+    }
+
+    // Метод для получения бронирований для всех вещей владельца
+    private Map<Long, List<BookingDto>> getBookingsForOwnerItems(List<Item> ownerItems) {
+        Map<Long, List<BookingDto>> bookingsMap = new HashMap<>();
+        for (Item item : ownerItems) {
+            List<BookingDto> bookings = bookingService.getItemsOwnerBookings(item.getId(), BookingState.ALL);
+            bookingsMap.put(item.getId(), bookings);
+        }
+        return bookingsMap;
     }
 
     @Override
