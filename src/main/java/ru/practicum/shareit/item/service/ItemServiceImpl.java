@@ -154,9 +154,7 @@ public class ItemServiceImpl implements ItemService {
 
             // Добавляем бронирования для текущей вещи
             List<BookingDto> bookings = bookingsMap.getOrDefault(item.getId(), Collections.emptyList());
-
-            // Предположим, что у ItemDto есть метод setBookingsList для добавления списка бронирований
-            itemDto.setBookingsList(bookings);
+            itemDto.setBookings(bookings);
 
             // Добавляем комментарии для текущей вещи
             addComments(itemDto);
