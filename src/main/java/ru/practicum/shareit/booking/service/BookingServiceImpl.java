@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
@@ -32,17 +31,20 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
+
     private final ItemService itemService;
     private final UserService userService;
-    private final BookingMapper bookingMapper;
-    private final ItemMapper itemMapper;
-    private final UserMapper userMapper;
+    @Autowired
 
-    @Transactional
+    private BookingMapper bookingMapper;
+    @Autowired
+    private ItemMapper itemMapper;
+    @Autowired
+    private UserMapper userMapper;
+
     @Override
     public BookingDto addNewBooking(long userId, BookingFromUserDto bookingFromUser) {
         UserDto userDto = userService.getUser(userId);
