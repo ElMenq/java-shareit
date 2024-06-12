@@ -7,8 +7,10 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.enums.BookingState;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * TODO Sprint add-bookings.
@@ -55,6 +57,17 @@ public class BookingController {
                                                                   @RequestParam(defaultValue = "ALL") String state) {
         log.info("Received GET-request at /bookings/owner?state={} endpoint from user id={}", state, userId);
         return ResponseEntity.ok().body(bookingService.getItemsOwnerBookings(userId, state));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getBookings(@RequestParam long userId, @RequestParam String state) {
+        Optional<BookingState> bookingState = BookingState.from(state);
+        if (bookingState.isEmpty()) {
+            return ResponseEntity.badRequest().body("Invalid booking state: " + state);
+        }
+
+        List<BookingDto> bookings = bookingService.getBookings(userId, bookingState.get());
+        return ResponseEntity.ok(bookings);
     }
 
 }

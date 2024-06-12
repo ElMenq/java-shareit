@@ -275,5 +275,55 @@ public class BookingServiceImpl implements BookingService {
                 .map(bookingMapper::toBookingDto)
                 .collect(Collectors.toList());
     }
+    @Override
+    public List<BookingDto> getBookings(long userId, String state) {
+        User user = userMapper.toUser(userService.getUser(userId));
+        BookingState status;
+        try {
+            status = BookingState.valueOf(state);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Unknown state: UNSUPPORTED_STATUS");
+        }
+        List<Booking> bookings = new ArrayList<>();
+        switch (status) {
+            case ALL:
+                bookings = bookingRepository.findAllByBooker(user, Sort.by("end").descending());
+                break;
+            case CURRENT:
+                bookings = bookingRepository.findByBookerAndStartIsBeforeAndEndIsAfter(
+                        user,
+                        LocalDateTime.now(),
+                        LocalDateTime.now(),
+                        Sort.by("end").descending());
+                break;
+            case PAST:
+                bookings = bookingRepository.findByBookerAndEndIsBefore(
+                        user,
+                        LocalDateTime.now(),
+                        Sort.by("end").descending());
+                break;
+            case FUTURE:
+                bookings = bookingRepository.findByBookerAndStartIsAfter(
+                        user,
+                        LocalDateTime.now(),
+                        Sort.by("end").descending());
+                break;
+            case WAITING:
+                bookings = bookingRepository.findByBookerAndStatusIs(
+                        user,
+                        BookingStatus.WAITING,
+                        Sort.by("end").descending());
+                break;
+            case REJECTED:
+                bookings = bookingRepository.findByBookerAndStatusIs(
+                        user,
+                        BookingStatus.REJECTED,
+                        Sort.by("end").descending());
+                break;
+        }
+        return bookings.stream()
+                .map(bookingMapper::toBookingDto)
+                .collect(Collectors.toList());
+    }
 
 }
