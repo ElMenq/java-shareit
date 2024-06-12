@@ -23,9 +23,7 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -142,15 +140,33 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> getOwnerItems(long userId) {
         List<Item> ownerItems = itemRepository.findAllByOwnerId(userId);
+        List<Long> itemIds = ownerItems.stream().map(Item::getId).collect(Collectors.toList());
+
+        Map<Long, Booking> lastBookings = bookingRepository.findLastBookingsByItemIds(itemIds, LocalDateTime.now(), BookingStatus.APPROVED)
+                .stream().collect(Collectors.toMap(booking -> booking.getItem().getId(), booking -> booking));
+
+        Map<Long, Booking> nextBookings = bookingRepository.findNextBookingsByItemIds(itemIds, LocalDateTime.now(), BookingStatus.APPROVED)
+                .stream().collect(Collectors.toMap(booking -> booking.getItem().getId(), booking -> booking));
+
+        Map<Long, List<Comment>> commentsMap = commentRepository.findAllByItemIdIn(itemIds)
+                .stream().collect(Collectors.groupingBy(comment -> comment.getItem().getId()));
+
         List<ItemDto> listItemDto = new ArrayList<>();
         for (Item item : ownerItems) {
             ItemDto itemDto = itemMapper.toItemDto(item);
+
             if (item.getOwner().getId().equals(userId)) {
-                addBookings(itemDto);
+                itemDto.setLastBooking(bookingMapper.toBookingForItemDto(lastBookings.get(item.getId())));
+                itemDto.setNextBooking(bookingMapper.toBookingForItemDto(nextBookings.get(item.getId())));
             }
-            addComments(itemDto);
+
+            List<CommentDto> commentDtos = commentsMap.getOrDefault(item.getId(), Collections.emptyList())
+                    .stream().map(commentMapper::toCommentDto).collect(Collectors.toList());
+            itemDto.setComments(commentDtos);
+
             listItemDto.add(itemDto);
         }
+
         return listItemDto;
     }
 
