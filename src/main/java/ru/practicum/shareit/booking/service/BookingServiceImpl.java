@@ -39,12 +39,11 @@ public class BookingServiceImpl implements BookingService {
 
     private final ItemService itemService;
     private final UserService userService;
-    @Autowired
 
     private BookingMapper bookingMapper;
-    @Autowired
+
     private ItemMapper itemMapper;
-    @Autowired
+
     private UserMapper userMapper;
 
     @Override
