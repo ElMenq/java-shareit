@@ -110,6 +110,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public BookingDto updateBooking(long userId, long bookingId, String approved) {
         Booking booking = findBooking(bookingId);
         validateBookingUpdate(userId, booking);
@@ -160,6 +161,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public BookingDto getBooking(long userId, long bookingId) {
         User user = userMapper.toUser(userService.getUser(userId));
         Booking booking = findBooking(bookingId);
@@ -175,6 +177,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingDto> getUserBookings(long userId, BookingState state) {
         User user = userMapper.toUser(userService.getUser(userId));
         List<Booking> bookings = new ArrayList<>();
@@ -220,6 +223,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingDto> getItemsOwnerBookings(long userId, BookingState state) {
         User user = userMapper.toUser(userService.getUser(userId));
         List<Booking> bookings = new ArrayList<>();
