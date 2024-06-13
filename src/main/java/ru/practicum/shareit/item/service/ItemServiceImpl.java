@@ -3,7 +3,6 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repo.BookingRepository;
@@ -24,7 +23,6 @@ import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -38,13 +36,13 @@ public class ItemServiceImpl implements ItemService {
     private final UserService userService;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
+
     private final ItemMapper itemMapper;
     private final UserMapper userMapper;
     private final BookingMapper bookingMapper;
     private final CommentMapper commentMapper;
 
     @Override
-    @Transactional
     public ItemDto addNewItem(long userId, ItemDto itemDto) {
         validate(itemDto);
         Item item = itemMapper.toItem(itemDto);
@@ -67,7 +65,6 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Transactional
     public ItemDto updateItem(long userId, long itemId, ItemDto itemDto) {
         Optional<Item> optionalItem = itemRepository.findById(itemId);
         if (optionalItem.isEmpty()) {
@@ -97,7 +94,6 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public ItemDto getItem(long userId, long itemId) {
         if (itemId == 0) {
             throw new ValidationException();
@@ -139,39 +135,9 @@ public class ItemServiceImpl implements ItemService {
         itemDto.setComments(listCommentDto);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ItemDto> getOwnerItems(long userId) {
-        List<Item> ownerItems = itemRepository.findAllByOwnerIdWithBookingsAndComments(userId);
-        List<ItemDto> listItemDto = ownerItems.stream()
-                .map(item -> {
-                    ItemDto itemDto = itemMapper.toItemDto(item);
-                    addBookingsAndComments(item, itemDto);
-                    return itemDto;
-                })
-                .collect(Collectors.toList());
-        return listItemDto;
-    }
-
-    private void addBookingsAndComments(Item item, ItemDto itemDto) {
-        Optional<Booking> lastBooking = item.getBookings().stream()
-                .filter(booking -> booking.getStatus() == BookingStatus.APPROVED && booking.getStart().isBefore(LocalDateTime.now()))
-                .max(Comparator.comparing(Booking::getEnd));
-        itemDto.setLastBooking(bookingMapper.toBookingForItemDto(lastBooking.orElse(null)));
-
-        Optional<Booking> nextBooking = item.getBookings().stream()
-                .filter(booking -> booking.getStatus() == BookingStatus.APPROVED && booking.getStart().isAfter(LocalDateTime.now()))
-                .min(Comparator.comparing(Booking::getStart));
-        itemDto.setNextBooking(bookingMapper.toBookingForItemDto(nextBooking.orElse(null)));
-
-        List<CommentDto> listCommentDto = item.getComments().stream()
-                .map(commentMapper::toCommentDto)
-                .collect(Collectors.toList());
-        itemDto.setComments(listCommentDto);
-    }
+   z
 
     @Override
-    @Transactional(readOnly = true)
     public List<ItemDto> search(long userId, String text) {
         if (text.isBlank()) {
             return new ArrayList<>();
@@ -195,7 +161,6 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    @Transactional
     public CommentDto addComment(long userId, long itemId, CommentDto commentDto) {
         User author = userMapper.toUser(userService.getUser(userId));
         Item item = findItem(itemId);
