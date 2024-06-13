@@ -135,7 +135,19 @@ public class ItemServiceImpl implements ItemService {
         itemDto.setComments(listCommentDto);
     }
 
-   z
+    @Override
+    public List<ItemDto> getOwnerItems(long userId) {
+        List<Item> ownerItems = itemRepository.findAllByOwnerId(userId);
+        List<ItemDto> listItemDto = ownerItems.stream()
+                .map(item -> {
+                    ItemDto itemDto = itemMapper.toItemDto(item);
+                    addBookings(itemDto);
+                    addComments(itemDto);
+                    return itemDto;
+                })
+                .collect(Collectors.toList());
+        return listItemDto;
+    }
 
     @Override
     public List<ItemDto> search(long userId, String text) {
