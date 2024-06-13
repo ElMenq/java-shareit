@@ -23,6 +23,7 @@ import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -137,16 +138,32 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getOwnerItems(long userId) {
-        List<Item> ownerItems = itemRepository.findAllByOwnerId(userId);
+        List<Item> ownerItems = itemRepository.findAllByOwnerIdWithBookingsAndComments(userId);
         List<ItemDto> listItemDto = ownerItems.stream()
                 .map(item -> {
                     ItemDto itemDto = itemMapper.toItemDto(item);
-                    addBookings(itemDto);
-                    addComments(itemDto);
+                    addBookingsAndComments(item, itemDto);
                     return itemDto;
                 })
                 .collect(Collectors.toList());
         return listItemDto;
+    }
+
+    private void addBookingsAndComments(Item item, ItemDto itemDto) {
+        Optional<Booking> lastBooking = item.getBookings().stream()
+                .filter(booking -> booking.getStatus() == BookingStatus.APPROVED && booking.getStart().isBefore(LocalDateTime.now()))
+                .max(Comparator.comparing(Booking::getEnd));
+        itemDto.setLastBooking(bookingMapper.toBookingForItemDto(lastBooking.orElse(null)));
+
+        Optional<Booking> nextBooking = item.getBookings().stream()
+                .filter(booking -> booking.getStatus() == BookingStatus.APPROVED && booking.getStart().isAfter(LocalDateTime.now()))
+                .min(Comparator.comparing(Booking::getStart));
+        itemDto.setNextBooking(bookingMapper.toBookingForItemDto(nextBooking.orElse(null)));
+
+        List<CommentDto> listCommentDto = item.getComments().stream()
+                .map(commentMapper::toCommentDto)
+                .collect(Collectors.toList());
+        itemDto.setComments(listCommentDto);
     }
 
     @Override
