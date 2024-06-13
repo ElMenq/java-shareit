@@ -38,14 +38,10 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
 
-    @Autowired
-    private ItemMapper itemMapper;
-    @Autowired
-    private UserMapper userMapper;
-    @Autowired
-    private BookingMapper bookingMapper;
-    @Autowired
-    private CommentMapper commentMapper;
+    private final ItemMapper itemMapper;
+    private final UserMapper userMapper;
+    private final BookingMapper bookingMapper;
+    private final CommentMapper commentMapper;
 
     @Override
     public ItemDto addNewItem(long userId, ItemDto itemDto) {
