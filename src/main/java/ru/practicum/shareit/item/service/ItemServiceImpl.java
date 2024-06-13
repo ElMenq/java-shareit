@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repo.BookingRepository;
@@ -37,13 +38,13 @@ public class ItemServiceImpl implements ItemService {
     private final UserService userService;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
-
     private final ItemMapper itemMapper;
     private final UserMapper userMapper;
     private final BookingMapper bookingMapper;
     private final CommentMapper commentMapper;
 
     @Override
+    @Transactional
     public ItemDto addNewItem(long userId, ItemDto itemDto) {
         validate(itemDto);
         Item item = itemMapper.toItem(itemDto);
@@ -66,6 +67,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public ItemDto updateItem(long userId, long itemId, ItemDto itemDto) {
         Optional<Item> optionalItem = itemRepository.findById(itemId);
         if (optionalItem.isEmpty()) {
@@ -95,6 +97,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ItemDto getItem(long userId, long itemId) {
         if (itemId == 0) {
             throw new ValidationException();
@@ -137,6 +140,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ItemDto> getOwnerItems(long userId) {
         List<Item> ownerItems = itemRepository.findAllByOwnerIdWithBookingsAndComments(userId);
         List<ItemDto> listItemDto = ownerItems.stream()
@@ -167,6 +171,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ItemDto> search(long userId, String text) {
         if (text.isBlank()) {
             return new ArrayList<>();
@@ -190,6 +195,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public CommentDto addComment(long userId, long itemId, CommentDto commentDto) {
         User author = userMapper.toUser(userService.getUser(userId));
         Item item = findItem(itemId);
