@@ -22,8 +22,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    @Autowired
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
 
     public List<UserDto> getAll() {
         List<User> users = userRepository.findAll();

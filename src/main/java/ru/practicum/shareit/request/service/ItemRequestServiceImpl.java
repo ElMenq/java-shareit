@@ -34,10 +34,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
 
-    @Autowired
-    private ItemRequestMapper itemRequestMapper;
-    @Autowired
-    private ItemMapper itemMapper;
+    private final ItemRequestMapper itemRequestMapper;
+    private final ItemMapper itemMapper;
 
     @Override
     public ItemRequestDto create(long userId, ItemRequestShortDto itemRequestShortDto) {
