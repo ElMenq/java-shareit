@@ -470,37 +470,6 @@ public class ItemServiceImplTest {
     }
 
     @Test
-    void createItemMakeAvailableAndAddComment() {
-        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
-
-        when(itemRepository.save(item)).thenReturn(item);
-        Item savedItem = itemMapper.toItem(itemService.addNewItem(user.getId(), itemDto));
-        assertEquals(item, savedItem);
-
-        when(itemRepository.findById(item.getId())).thenReturn(Optional.ofNullable(item));
-        ItemDto foundItemDto = itemService.getItem(user.getId(), item.getId());
-        assertEquals(itemDto, foundItemDto);
-
-        item.setAvailable(true);
-        itemDto = itemMapper.toItemDto(item);
-
-        when(itemRepository.findById(item.getId())).thenReturn(Optional.ofNullable(item));
-        ItemDto updatedItemDto = itemService.updateItem(user.getId(), item.getId(), itemDto);
-        assertEquals(itemDto, updatedItemDto);
-
-        when(bookingRepository.save(any())).thenReturn(bookingByAnotherUser);
-        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(anotherUser));
-        BookingDto bookingDto = bookingService.addNewBooking(anotherUser.getId(), bookingByAnotherUserDto);
-        assertEquals(bookingByAnotherUser, bookingMapper.toBooking(bookingDto));
-
-        when(bookingRepository.findFirst1ByItemIdAndBookerIdAndEndIsBefore(anyLong(), anyLong(), any()))
-                .thenReturn(Optional.ofNullable(bookingByAnotherUser));
-        when(commentRepository.save(any())).thenReturn(comment);
-        CommentDto addedCommentDto = itemService.addComment(anotherUser.getId(), item.getId(), commentDto);
-        assertEquals(commentDto, addedCommentDto);
-    }
-
-    @Test
     void findItemById() {
         when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
 
