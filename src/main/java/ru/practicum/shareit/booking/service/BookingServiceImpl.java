@@ -2,10 +2,10 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
@@ -36,11 +36,10 @@ public class BookingServiceImpl implements BookingService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
 
-
-    private final BookingMapper bookingMapper;
+    @Autowired
+    private BookingMapper bookingMapper;
 
     @Override
-    @Transactional
     public BookingDto addNewBooking(long userId, BookingFromUserDto bookingFromUser) {
         User booker = findUser(userId);
         validateBookingDate(userId, bookingFromUser);
@@ -104,7 +103,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional
     public BookingDto updateBooking(long userId, long bookingId, String approved) {
         Booking booking = findBooking(bookingId);
         validateBookingUpdate(userId, booking);
@@ -155,7 +153,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public BookingDto getBooking(long userId, long bookingId) {
         User user = findUser(userId);
         Booking booking = findBooking(bookingId);
@@ -171,7 +168,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<BookingDto> getUserBookings(long userId, String state, Integer from, Integer size) {
         User user = findUser(userId);
         BookingState status;
@@ -271,7 +267,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<BookingDto> getItemsOwnerBookings(long userId, String state, Integer from, Integer size) {
         User user = findUser(userId);
         BookingState status;
@@ -401,6 +396,5 @@ public class BookingServiceImpl implements BookingService {
         }
         return item.get();
     }
-    //hg
 
 }

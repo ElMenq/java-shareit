@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
@@ -466,6 +467,100 @@ public class ItemServiceImplTest {
         ArrayList<CommentDto> commentsDto = new ArrayList<>();
         ownerItemsDto.forEach(itemDto -> itemDto.setComments(commentsDto));
         assertEquals(itemsDto, ownerItemsDto);
+    }
+
+    @Test
+    void createItemMakeAvailableAndAddComment() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+
+        when(itemRepository.save(item)).thenReturn(item);
+        Item savedItem = itemMapper.toItem(itemService.addNewItem(user.getId(), itemDto));
+        assertEquals(item, savedItem);
+
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.ofNullable(item));
+        ItemDto foundItemDto = itemService.getItem(user.getId(), item.getId());
+        assertEquals(itemDto, foundItemDto);
+
+        item.setAvailable(true);
+        itemDto = itemMapper.toItemDto(item);
+
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.ofNullable(item));
+        ItemDto updatedItemDto = itemService.updateItem(user.getId(), item.getId(), itemDto);
+        assertEquals(itemDto, updatedItemDto);
+
+        when(bookingRepository.save(any())).thenReturn(bookingByAnotherUser);
+        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(anotherUser));
+        BookingDto bookingDto = bookingService.addNewBooking(anotherUser.getId(), bookingByAnotherUserDto);
+        assertEquals(bookingByAnotherUser, bookingMapper.toBooking(bookingDto));
+
+        when(bookingRepository.findFirst1ByItemIdAndBookerIdAndEndIsBefore(anyLong(), anyLong(), any()))
+                .thenReturn(Optional.ofNullable(bookingByAnotherUser));
+        when(commentRepository.save(any())).thenReturn(comment);
+        CommentDto addedCommentDto = itemService.addComment(anotherUser.getId(), item.getId(), commentDto);
+        assertEquals(commentDto, addedCommentDto);
+    }
+
+    @Test
+    void createItemMakeAvailableAndTryAddCommentWithoutBookingGetException() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+
+        when(itemRepository.save(item)).thenReturn(item);
+        Item savedItem = itemMapper.toItem(itemService.addNewItem(user.getId(), itemDto));
+        assertEquals(item, savedItem);
+
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.ofNullable(item));
+        ItemDto foundItemDto = itemService.getItem(user.getId(), item.getId());
+        assertEquals(itemDto, foundItemDto);
+
+        item.setAvailable(true);
+        itemDto = itemMapper.toItemDto(item);
+
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.ofNullable(item));
+        ItemDto updatedItemDto = itemService.updateItem(user.getId(), item.getId(), itemDto);
+        assertEquals(itemDto, updatedItemDto);
+
+        when(bookingRepository.findFirst1ByItemIdAndBookerIdAndEndIsBefore(anyLong(), anyLong(), any()))
+                .thenReturn(Optional.ofNullable(bookingByAnotherUser));
+        when(commentRepository.save(any())).thenReturn(comment);
+        commentDto.setText("");
+        Throwable thrown = catchThrowable(() -> {
+            itemService.addComment(anotherUser.getId(), item.getId(), commentDto);
+        });
+        assertThat(thrown).isInstanceOf(ValidationException.class);
+    }
+
+    @Test
+    void createItemMakeAvailableAndAddEmptyCommentGetException() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+
+        when(itemRepository.save(item)).thenReturn(item);
+        Item savedItem = itemMapper.toItem(itemService.addNewItem(user.getId(), itemDto));
+        assertEquals(item, savedItem);
+
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.ofNullable(item));
+        ItemDto foundItemDto = itemService.getItem(user.getId(), item.getId());
+        assertEquals(itemDto, foundItemDto);
+
+        item.setAvailable(true);
+        itemDto = itemMapper.toItemDto(item);
+
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.ofNullable(item));
+        ItemDto updatedItemDto = itemService.updateItem(user.getId(), item.getId(), itemDto);
+        assertEquals(itemDto, updatedItemDto);
+
+        when(bookingRepository.save(any())).thenReturn(bookingByAnotherUser);
+        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(anotherUser));
+        BookingDto bookingDto = bookingService.addNewBooking(anotherUser.getId(), bookingByAnotherUserDto);
+        assertEquals(bookingByAnotherUser, bookingMapper.toBooking(bookingDto));
+
+        when(bookingRepository.findFirst1ByItemIdAndBookerIdAndEndIsBefore(anyLong(), anyLong(), any()))
+                .thenReturn(Optional.ofNullable(bookingByAnotherUser));
+        when(commentRepository.save(any())).thenReturn(comment);
+        commentDto.setText("");
+        Throwable thrown = catchThrowable(() -> {
+            itemService.addComment(anotherUser.getId(), item.getId(), commentDto);
+        });
+        assertThat(thrown).isInstanceOf(ValidationException.class);
     }
 
     @Test

@@ -7,13 +7,9 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.enums.BookingState;
 
 import java.util.List;
 
-/**
- * TODO Sprint add-bookings.
- */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -62,14 +58,6 @@ public class BookingController {
         log.info("Received GET-request at /bookings/owner?state={}&from={}&size={} endpoint from user id={}",
                 state, from, size, userId);
         return ResponseEntity.ok().body(bookingService.getItemsOwnerBookings(userId, state, from, size));
-    }
-
-    private BookingState resolveBookingState(String state) {
-        try {
-            return BookingState.valueOf(state.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown state: " + state);
-        }
     }
 
 }

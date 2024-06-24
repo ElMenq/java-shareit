@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
@@ -40,9 +41,12 @@ public class ItemServiceImpl implements ItemService {
     private final CommentRepository commentRepository;
     private final ItemRequestService itemRequestService;
 
-    private final ItemMapper itemMapper;
-    private final BookingMapper bookingMapper;
-    private final CommentMapper commentMapper;
+    @Autowired
+    private ItemMapper itemMapper;
+    @Autowired
+    private BookingMapper bookingMapper;
+    @Autowired
+    private CommentMapper commentMapper;
 
     @Override
     public ItemDto addNewItem(long userId, ItemDto itemDto) {
