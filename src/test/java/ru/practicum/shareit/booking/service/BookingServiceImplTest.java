@@ -41,9 +41,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
+
+
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookingServiceImplTest {
 
     @Autowired
@@ -95,6 +97,8 @@ public class BookingServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
+
         user = User.builder()
                 .id(1L)
                 .name("user")
@@ -107,98 +111,37 @@ public class BookingServiceImplTest {
                 .email("another_user@ya.ru")
                 .build();
 
-        userForCheck = User.builder()
-                .id(3L)
-                .name("User for check")
-                .email("user_for_check@ya.ru")
-                .build();
-
         item = Item.builder()
                 .id(1L)
                 .name("Item 1")
                 .description("Description of item 1")
                 .available(true)
                 .owner(user)
-                .request(request)
                 .build();
-        itemDto = itemMapper.toItemDto(item);
-
-        anotherItem = Item.builder()
-                .id(2L)
-                .name("Item 2")
-                .description("Description of item 2")
-                .available(true)
-                .owner(user)
-                .request(request)
-                .build();
-        anotherItemDto = itemMapper.toItemDto(anotherItem);
-
-        items = List.of(item, anotherItem);
-        itemsDto = List.of(itemDto, anotherItemDto);
-
-        request = ItemRequest.builder()
-                .id(1L)
-                .description("Request 1")
-                .created(LocalDateTime.of(2024, 6, 6, 12, 0, 0))
-                .requestor(user)
-                .build();
-        requestDto = requestMapper.toItemRequestDto(request);
-
-        requestFromUser = ItemRequestShortDto.builder()
-                .id(1L)
-                .description("Request 1")
-                .build();
-
-        anotherRequest = ItemRequest.builder()
-                .id(2L)
-                .description("Request 2")
-                .created(LocalDateTime.of(2024, 6 , 6, 15, 0, 0))
-                .requestor(user)
-                .build();
-        anotherRequestDto = requestMapper.toItemRequestDto(anotherRequest);
-
-        anotherRequestFromUser = ItemRequestShortDto.builder()
-                .id(2L)
-                .description("Request 2")
-                .build();
-
-        requests = List.of(request, anotherRequest);
-        requestsDto = List.of(requestDto, anotherRequestDto);
 
         booking = Booking.builder()
                 .id(1L)
-                .start(LocalDateTime.of(2024, 6, 5, 3, 0, 0))
-                .end(LocalDateTime.of(2024, 6, 5, 6, 0, 0))
+                .start(LocalDateTime.now().plusDays(1))
+                .end(LocalDateTime.now().plusDays(2))
                 .item(item)
                 .booker(anotherUser)
                 .status(BookingStatus.WAITING)
                 .build();
-        bookingDto = bookingMapper.toBookingDto(booking);
 
         bookingFromUser = BookingFromUserDto.builder()
                 .itemId(item.getId())
-                .start(LocalDateTime.of(2023, 6, 5, 3, 0, 0))
-                .end(LocalDateTime.of(2023, 6, 5, 6, 0, 0))
+                .start(LocalDateTime.now().plusDays(1))
+                .end(LocalDateTime.now().plusDays(2))
                 .build();
 
-        anotherBooking = Booking.builder()
-                .id(2L)
-                .start(LocalDateTime.of(2023, 6, 5, 9, 0, 0))
-                .end(LocalDateTime.of(2023, 6, 5, 12, 0, 0))
-                .item(item)
-                .booker(anotherUser)
+        bookingDto = BookingDto.builder()
+                .id(1L)
+                .start(booking.getStart())
+                .end(booking.getEnd())
+                .item(new ItemShortDto(item.getId(), item.getName()))
+                .booker(new UserShortDto(anotherUser.getId()))
                 .status(BookingStatus.WAITING)
                 .build();
-        anotherBookingDto = bookingMapper.toBookingDto(anotherBooking);
-
-        anotherBookingFromUser = BookingFromUserDto.builder()
-                .itemId(item.getId())
-                .start(LocalDateTime.of(2023, 6, 5, 9, 0, 0))
-                .end(LocalDateTime.of(2023, 6, 5, 12, 0, 0))
-                .build();
-
-        bookings = List.of(booking, anotherBooking);
-        bookingsDto = List.of(bookingDto, anotherBookingDto);
     }
 
     @Test
