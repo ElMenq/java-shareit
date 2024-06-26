@@ -113,6 +113,35 @@ public class BookingServiceImplTest {
                 .email("user_for_check@ya.ru")
                 .build();
 
+        request = ItemRequest.builder()
+                .id(1L)
+                .description("Request 1")
+                .created(LocalDateTime.now().minusDays(1))
+                .requestor(user)
+                .build();
+        requestDto = requestMapper.toItemRequestDto(request);
+
+        requestFromUser = ItemRequestShortDto.builder()
+                .id(1L)
+                .description("Request 1")
+                .build();
+
+        anotherRequest = ItemRequest.builder()
+                .id(2L)
+                .description("Request 2")
+                .created(LocalDateTime.now().minusHours(3))
+                .requestor(user)
+                .build();
+        anotherRequestDto = requestMapper.toItemRequestDto(anotherRequest);
+
+        anotherRequestFromUser = ItemRequestShortDto.builder()
+                .id(2L)
+                .description("Request 2")
+                .build();
+
+        LocalDateTime startTime = LocalDateTime.now().plusDays(1);
+        LocalDateTime endTime = startTime.plusHours(3);
+
         item = Item.builder()
                 .id(1L)
                 .name("Item 1")
@@ -136,39 +165,10 @@ public class BookingServiceImplTest {
         items = List.of(item, anotherItem);
         itemsDto = List.of(itemDto, anotherItemDto);
 
-        request = ItemRequest.builder()
-                .id(1L)
-                .description("Request 1")
-                .created(LocalDateTime.of(2024, 6, 6, 12, 0, 0))
-                .requestor(user)
-                .build();
-        requestDto = requestMapper.toItemRequestDto(request);
-
-        requestFromUser = ItemRequestShortDto.builder()
-                .id(1L)
-                .description("Request 1")
-                .build();
-
-        anotherRequest = ItemRequest.builder()
-                .id(2L)
-                .description("Request 2")
-                .created(LocalDateTime.of(2024, 6 , 6, 15, 0, 0))
-                .requestor(user)
-                .build();
-        anotherRequestDto = requestMapper.toItemRequestDto(anotherRequest);
-
-        anotherRequestFromUser = ItemRequestShortDto.builder()
-                .id(2L)
-                .description("Request 2")
-                .build();
-
-        requests = List.of(request, anotherRequest);
-        requestsDto = List.of(requestDto, anotherRequestDto);
-
         booking = Booking.builder()
                 .id(1L)
-                .start(LocalDateTime.of(2024, 6, 5, 3, 0, 0))
-                .end(LocalDateTime.of(2024, 6, 5, 6, 0, 0))
+                .start(startTime)
+                .end(endTime)
                 .item(item)
                 .booker(anotherUser)
                 .status(BookingStatus.WAITING)
@@ -177,14 +177,14 @@ public class BookingServiceImplTest {
 
         bookingFromUser = BookingFromUserDto.builder()
                 .itemId(item.getId())
-                .start(LocalDateTime.of(2024, 6, 5, 3, 0, 0))
-                .end(LocalDateTime.of(2024, 6, 5, 6, 0, 0))
+                .start(startTime)
+                .end(endTime)
                 .build();
 
         anotherBooking = Booking.builder()
                 .id(2L)
-                .start(LocalDateTime.of(2024, 6, 5, 9, 0, 0))
-                .end(LocalDateTime.of(2024, 6, 5, 12, 0, 0))
+                .start(startTime.plusHours(6))
+                .end(endTime.plusHours(6))
                 .item(item)
                 .booker(anotherUser)
                 .status(BookingStatus.WAITING)
@@ -193,8 +193,8 @@ public class BookingServiceImplTest {
 
         anotherBookingFromUser = BookingFromUserDto.builder()
                 .itemId(item.getId())
-                .start(LocalDateTime.of(2024, 6, 5, 9, 0, 0))
-                .end(LocalDateTime.of(2024, 6, 5, 12, 0, 0))
+                .start(startTime.plusHours(6))
+                .end(endTime.plusHours(6))
                 .build();
 
         bookings = List.of(booking, anotherBooking);

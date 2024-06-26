@@ -60,6 +60,7 @@ public class BookingServiceImpl implements BookingService {
     private void validateBookingDate(long userId, BookingFromUserDto booking) {
         LocalDateTime start = booking.getStart();
         LocalDateTime end = booking.getEnd();
+
         if (start == null || end == null) {
             log.info("У бронирования {} от user id={} не указаны даты бронирования", booking, userId);
             throw new ValidationException();

@@ -135,33 +135,35 @@ public class ItemServiceImplTest {
         items = List.of(item, anotherItem);
         itemsDto = List.of(itemDto, anotherItemDto);
 
+        LocalDateTime now = LocalDateTime.now();
+
         bookingByAnotherUser = Booking.builder()
                 .id(1L)
-                .start(LocalDateTime.of(2023, 6, 5, 14, 52, 0))
-                .end(LocalDateTime.of(2023, 6, 5, 14, 53, 0))
+                .start(now.plusDays(1).plusHours(2))  // Пример: текущее время + 1 день + 2 часа
+                .end(now.plusDays(1).plusHours(3))    // Пример: текущее время + 1 день + 3 часа
                 .item(item)
                 .booker(anotherUser)
                 .status(BookingStatus.WAITING)
                 .build();
         bookingByAnotherUserDto = BookingFromUserDto.builder()
                 .itemId(item.getId())
-                .start(LocalDateTime.of(2023, 6, 5, 14, 52, 0))
-                .end(LocalDateTime.of(2023, 6, 5, 14, 53, 0))
+                .start(bookingByAnotherUser.getStart())
+                .end(bookingByAnotherUser.getEnd())
                 .build();
 
         comment = Comment.builder()
                 .id(1L)
-                .text("Comment 1 on item by Another ser")
+                .text("Comment 1 on item by Another user")
                 .item(item)
                 .author(anotherUser)
-                .created(LocalDateTime.of(2023, 6, 5, 15, 0, 0))
+                .created(now.plusHours(1))  // Пример: текущее время + 1 час
                 .build();
         commentDto = commentMapper.toCommentDto(comment);
 
         request = ItemRequest.builder()
                 .id(1L)
                 .description("Request 1")
-                .created(LocalDateTime.of(2023, 6, 5, 12, 0, 0))
+                .created(now.minusDays(1))  // Пример: текущее время - 1 день
                 .requestor(anotherUser)
                 .build();
         requestDto = requestMapper.toItemRequestDto(request);
