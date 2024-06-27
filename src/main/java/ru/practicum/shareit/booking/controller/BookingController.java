@@ -3,15 +3,18 @@ package ru.practicum.shareit.booking.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.service.BookingService;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @Slf4j
-@RestController
+@Controller
 @RequiredArgsConstructor
 @RequestMapping("/bookings")
 public class BookingController {
@@ -43,8 +46,8 @@ public class BookingController {
     @GetMapping
     public ResponseEntity<List<BookingDto>> getUserBookings(@RequestHeader(value = "X-Sharer-User-Id") long userId,
                                                             @RequestParam(defaultValue = "ALL") String state,
-                                                            @RequestParam(required = false) Integer from,
-                                                            @RequestParam(required = false) Integer size) {
+                                                            @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                                            @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("Received GET-request at /bookings?state={}&from={}&size={} endpoint from user id={}",
                 state, from, size, userId);
         return ResponseEntity.ok().body(bookingService.getUserBookings(userId, state, from, size));
@@ -53,8 +56,8 @@ public class BookingController {
     @GetMapping("/owner")
     public ResponseEntity<List<BookingDto>> getItemsOwnerBookings(@RequestHeader(value = "X-Sharer-User-Id") long userId,
                                                                   @RequestParam(defaultValue = "ALL") String state,
-                                                                  @RequestParam(required = false) Integer from,
-                                                                  @RequestParam(required = false) Integer size) {
+                                                                  @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                                                  @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("Received GET-request at /bookings/owner?state={}&from={}&size={} endpoint from user id={}",
                 state, from, size, userId);
         return ResponseEntity.ok().body(bookingService.getItemsOwnerBookings(userId, state, from, size));
