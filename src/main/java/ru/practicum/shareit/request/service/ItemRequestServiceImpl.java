@@ -58,10 +58,29 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         List<ItemRequest> itemRequests = itemRequestRepository.findAllByRequestorId(owner.getId(),
                 getSortByCreatedForItemRequests());
         log.info("Найдено {} запросов от пользователя с id={}", itemRequests.size(), owner.getId());
+
+        List<Long> requestIds = itemRequests.stream()
+                .map(ItemRequest::getId)
+                .collect(Collectors.toList());
+
+        // Получаем все элементы для данных запросов за один запрос
+        List<Item> items = itemRepository.findAllByRequestIdIn(requestIds);
+
+        // Создаем Map, где ключом будет requestId, а значением список ItemDto
+        Map<Long, List<ItemDto>> itemsForRequests = items.stream()
+                .map(item -> itemMapper.toItemDto(item))
+                .collect(Collectors.groupingBy(ItemDto::getRequestId));
+
         List<ItemRequestDto> itemRequestsDto = itemRequests.stream()
                 .map(itemRequestMapper::toItemRequestDto)
                 .collect(Collectors.toList());
-        itemRequestsDto.forEach(this::addItems);
+
+        // Добавляем элементы к соответствующим ItemRequestDto
+        itemRequestsDto.forEach(itemRequestDto -> {
+            List<ItemDto> itemsForRequest = itemsForRequests.getOrDefault(itemRequestDto.getId(), new ArrayList<>());
+            itemRequestDto.setItems(itemsForRequest);
+        });
+
         return itemRequestsDto;
     }
 

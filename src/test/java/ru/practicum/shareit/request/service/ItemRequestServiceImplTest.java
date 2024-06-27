@@ -196,7 +196,7 @@ public class ItemRequestServiceImplTest {
 
     @Test
     void saveNewRequestsAndGetAll() {
-        when(itemRepository.findAllByRequestId(request.getId())).thenReturn(items);
+        when(itemRepository.findAllByRequestIdIn(anyList())).thenReturn(items);
 
         when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
 
@@ -209,9 +209,13 @@ public class ItemRequestServiceImplTest {
         assertEquals(anotherRequestDto, savedAnotherRequestDto);
 
         when(requestRepository.findAllByRequestorId(anyLong(), any())).thenReturn(requests);
+        when(itemRepository.findAllByRequestIdIn(anyList())).thenReturn(items);
+
         List<ItemRequestDto> foundRequestsDto = requestService.getAll(user.getId());
+
         requestDto.setItems(itemsDto);
-        anotherRequestDto.setItems(new ArrayList<>());
+        anotherRequestDto.setItems(new ArrayList<>()); // Обновляем anotherRequestDto для соответствия ожидаемому результату
+
         assertEquals(List.of(requestDto, anotherRequestDto), foundRequestsDto);
     }
 
