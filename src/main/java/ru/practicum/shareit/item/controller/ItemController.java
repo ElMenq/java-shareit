@@ -8,6 +8,8 @@ import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @Slf4j
@@ -42,8 +44,8 @@ public class ItemController {
 
     @GetMapping
     public ResponseEntity<List<ItemDto>> getAll(@RequestHeader("X-Sharer-User-Id") long userId,
-                                                @RequestParam(required = false) Integer from,
-                                                @RequestParam(required = false) Integer size) {
+                                                @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                                @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("Received GET-request at /items?from={}&size={} endpoint from user id={}", from, size, userId);
         return ResponseEntity.ok().body(itemService.getOwnerItems(userId, from, size));
     }
@@ -51,8 +53,8 @@ public class ItemController {
     @GetMapping("/search")
     public ResponseEntity<List<ItemDto>> search(@RequestHeader("X-Sharer-User-Id") long userId,
                                                 @RequestParam String text,
-                                                @RequestParam(required = false) Integer from,
-                                                @RequestParam(required = false) Integer size) {
+                                                @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                                @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("Received GET-request at /items/search?text={}&from={}&size={} endpoint from user id={}",
                 text, from, size, userId);
         return ResponseEntity.ok().body(itemService.search(userId, text, from, size));
