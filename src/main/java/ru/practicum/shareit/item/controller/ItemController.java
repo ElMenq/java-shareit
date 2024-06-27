@@ -37,22 +37,22 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ResponseEntity<ItemDto> get(@RequestHeader(Constants.HEADER_USER_ID) long userId,
+    public ResponseEntity<ItemDto> get(@RequestHeader("X-Sharer-User-Id") long userId,
                                        @PathVariable long itemId) {
         log.info("Received GET-request at /items/{} endpoint from user id={}", itemId, userId);
         return ResponseEntity.ok().body(itemService.getItem(userId, itemId));
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemDto>> getAll(@RequestHeader(Constants.HEADER_USER_ID) long userId,
-                                                @RequestParam(required = false) Integer from,
-                                                @RequestParam(required = false) Integer size) {
+    public ResponseEntity<List<ItemDto>> getAll(@RequestHeader("X-Sharer-User-Id") long userId,
+                                                @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                                @Positive @RequestParam(defaultValue = "10") Integer size) {
         log.info("Received GET-request at /items?from={}&size={} endpoint from user id={}", from, size, userId);
         return ResponseEntity.ok().body(itemService.getOwnerItems(userId, from, size));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ItemDto>> search(@RequestHeader(Constants.HEADER_USER_ID) long userId,
+    public ResponseEntity<List<ItemDto>> search(@RequestHeader("X-Sharer-User-Id") long userId,
                                                 @RequestParam String text,
                                                 @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
                                                 @Positive @RequestParam(defaultValue = "10") Integer size) {
