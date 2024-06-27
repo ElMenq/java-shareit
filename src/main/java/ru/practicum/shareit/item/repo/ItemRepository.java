@@ -8,7 +8,6 @@ import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
 
-@Repository
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
     List<Item> findAllByOwnerId(long userId);
