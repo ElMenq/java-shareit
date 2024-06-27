@@ -40,7 +40,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 @AutoConfigureMockMvc
-@SpringBootTest
 @FieldDefaults(level = AccessLevel.PRIVATE)
 class BookingControllerTest {
 
