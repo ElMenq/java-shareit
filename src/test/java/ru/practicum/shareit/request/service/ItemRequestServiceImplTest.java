@@ -29,12 +29,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -79,6 +79,20 @@ public class ItemRequestServiceImplTest {
                 .email("user@ya.ru")
                 .build();
 
+        request = ItemRequest.builder()
+                .id(1L)
+                .description("Request 1")
+                .created(LocalDateTime.of(2023, 5, 5, 12, 0, 0))
+                .requestor(user)
+                .build();
+
+        anotherRequest = ItemRequest.builder()
+                .id(2L)
+                .description("Request 2")
+                .created(LocalDateTime.of(2023, 5, 5, 15, 0, 0))
+                .requestor(user)
+                .build();
+
         Item item = Item.builder()
                 .id(1L)
                 .name("Item 1")
@@ -87,7 +101,6 @@ public class ItemRequestServiceImplTest {
                 .owner(user)
                 .request(request)
                 .build();
-        ItemDto itemDto = itemMapper.toItemDto(item);
 
         Item anotherItem = Item.builder()
                 .id(2L)
@@ -97,31 +110,17 @@ public class ItemRequestServiceImplTest {
                 .owner(user)
                 .request(request)
                 .build();
-        ItemDto anotherItemDto = itemMapper.toItemDto(anotherItem);
 
         items = List.of(item, anotherItem);
-        itemsDto = List.of(itemDto, anotherItemDto);
+        itemsDto = items.stream().map(itemMapper::toItemDto).collect(Collectors.toList());
 
-        request = ItemRequest.builder()
-                .id(1L)
-                .description("Request 1")
-                .created(LocalDateTime.of(2023, 5, 5, 12, 0, 0))
-                .requestor(user)
-                .build();
         requestDto = requestMapper.toItemRequestDto(request);
+        anotherRequestDto = requestMapper.toItemRequestDto(anotherRequest);
 
         requestFromUser = ItemRequestShortDto.builder()
                 .id(1L)
                 .description("Request 1")
                 .build();
-
-        anotherRequest = ItemRequest.builder()
-                .id(2L)
-                .description("Request 2")
-                .created(LocalDateTime.of(2023, 5, 5, 15, 0, 0))
-                .requestor(user)
-                .build();
-        anotherRequestDto = requestMapper.toItemRequestDto(anotherRequest);
 
         anotherRequestFromUser = ItemRequestShortDto.builder()
                 .id(2L)
@@ -218,9 +217,7 @@ public class ItemRequestServiceImplTest {
 
     @Test
     void saveNewRequestsAndSearchWithPageable() {
-        when(itemRepository.findAllByRequestId(request.getId())).thenReturn(items);
-
-        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
 
         when(requestRepository.save(any())).thenReturn(request);
         ItemRequestDto savedRequestDto = requestService.create(user.getId(), requestFromUser);
@@ -232,18 +229,22 @@ public class ItemRequestServiceImplTest {
 
         int from = 1;
         int size = 10;
-        when(requestRepository.findAllByOtherRequestors(anyLong(), (Pageable) any())).thenReturn(requests);
+        when(requestRepository.findAllByOtherRequestors(anyLong(), any(Pageable.class))).thenReturn(requests);
+
+        // Mocking item repository to return items for the given request IDs
+        when(itemRepository.findAllByRequestIdIn(anyList())).thenReturn(items);
+
         List<ItemRequestDto> foundRequestsDto = requestService.search(user.getId(), from, size);
+
         requestDto.setItems(itemsDto);
         anotherRequestDto.setItems(new ArrayList<>());
+
         assertEquals(List.of(requestDto, anotherRequestDto), foundRequestsDto);
     }
 
     @Test
     void saveNewRequestsAndSearchWithSort() {
-        when(itemRepository.findAllByRequestId(request.getId())).thenReturn(items);
-
-        when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
 
         when(requestRepository.save(any())).thenReturn(request);
         ItemRequestDto savedRequestDto = requestService.create(user.getId(), requestFromUser);
@@ -255,10 +256,16 @@ public class ItemRequestServiceImplTest {
 
         Integer from = null;
         Integer size = null;
-        when(requestRepository.findAllByOtherRequestors(anyLong(), (Sort) any())).thenReturn(requests);
+        when(requestRepository.findAllByOtherRequestors(anyLong(), any(Sort.class))).thenReturn(requests);
+
+        // Mocking item repository to return items for the given request IDs
+        when(itemRepository.findAllByRequestIdIn(anyList())).thenReturn(items);
+
         List<ItemRequestDto> foundRequestsDto = requestService.search(user.getId(), from, size);
+
         requestDto.setItems(itemsDto);
         anotherRequestDto.setItems(new ArrayList<>());
+
         assertEquals(List.of(requestDto, anotherRequestDto), foundRequestsDto);
     }
 

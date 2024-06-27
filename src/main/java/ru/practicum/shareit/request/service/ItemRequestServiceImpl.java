@@ -20,7 +20,9 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repo.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -81,6 +83,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public List<ItemRequestDto> search(long userId, Integer from, Integer size) {
         User owner = findUser(userId);
         List<ItemRequest> itemRequests;
+
         if (from != null && size != null) {
             validateSearchParameters(from, size);
             itemRequests = itemRequestRepository.findAllByOtherRequestors(owner.getId(),
@@ -89,12 +92,26 @@ public class ItemRequestServiceImpl implements ItemRequestService {
             itemRequests = itemRequestRepository.findAllByOtherRequestors(owner.getId(),
                     getSortByCreatedForItemRequests());
         }
+
         log.info("Найдено {} других запросов для пользователя с id={}", itemRequests.size(), owner.getId());
-        List<ItemRequestDto> itemRequestsDto = itemRequests.stream()
-                .map(itemRequestMapper::toItemRequestDto)
+
+        List<Long> requestIds = itemRequests.stream()
+                .map(ItemRequest::getId)
                 .collect(Collectors.toList());
-        itemRequestsDto.forEach(this::addItems);
-        return itemRequestsDto;
+
+        List<Item> items = itemRepository.findAllByRequestIdIn(requestIds);
+
+        Map<Long, List<ItemDto>> itemsByRequestId = items.stream()
+                .map(itemMapper::toItemDto)
+                .collect(Collectors.groupingBy(ItemDto::getRequestId));
+
+        return itemRequests.stream()
+                .map(itemRequest -> {
+                    ItemRequestDto dto = itemRequestMapper.toItemRequestDto(itemRequest);
+                    dto.setItems(itemsByRequestId.getOrDefault(itemRequest.getId(), new ArrayList<>()));
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     private User findUser(long userId) {
