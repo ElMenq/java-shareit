@@ -3,19 +3,18 @@ package ru.practicum.shareit.booking.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.enums.BookingState;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
-/**
- * TODO Sprint add-bookings.
- */
 @Slf4j
-@RestController
+@Controller
 @RequiredArgsConstructor
 @RequestMapping("/bookings")
 public class BookingController {
@@ -46,28 +45,22 @@ public class BookingController {
 
     @GetMapping
     public ResponseEntity<List<BookingDto>> getUserBookings(@RequestHeader(value = "X-Sharer-User-Id") long userId,
-                                                            @RequestParam(defaultValue = "ALL") String state) {
-        log.info("Received GET-request at /bookings endpoint from user id={} with state={}", userId, state);
-        BookingState bookingState = resolveBookingState(state);
-        List<BookingDto> bookings = bookingService.getUserBookings(userId, bookingState);
-        return ResponseEntity.ok().body(bookings);
+                                                            @RequestParam(defaultValue = "ALL") String state,
+                                                            @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                                            @Positive @RequestParam(defaultValue = "10") Integer size) {
+        log.info("Received GET-request at /bookings?state={}&from={}&size={} endpoint from user id={}",
+                state, from, size, userId);
+        return ResponseEntity.ok().body(bookingService.getUserBookings(userId, state, from, size));
     }
 
     @GetMapping("/owner")
     public ResponseEntity<List<BookingDto>> getItemsOwnerBookings(@RequestHeader(value = "X-Sharer-User-Id") long userId,
-                                                                  @RequestParam(defaultValue = "ALL") String state) {
-        log.info("Received GET-request at /bookings/owner endpoint from user id={} with state={}", userId, state);
-        BookingState bookingState = resolveBookingState(state);
-        List<BookingDto> bookings = bookingService.getItemsOwnerBookings(userId, bookingState);
-        return ResponseEntity.ok().body(bookings);
-    }
-
-    private BookingState resolveBookingState(String state) {
-        try {
-            return BookingState.valueOf(state.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown state: " + state);
-        }
+                                                                  @RequestParam(defaultValue = "ALL") String state,
+                                                                  @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
+                                                                  @Positive @RequestParam(defaultValue = "10") Integer size) {
+        log.info("Received GET-request at /bookings/owner?state={}&from={}&size={} endpoint from user id={}",
+                state, from, size, userId);
+        return ResponseEntity.ok().body(bookingService.getItemsOwnerBookings(userId, state, from, size));
     }
 
 }
