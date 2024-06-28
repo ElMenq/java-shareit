@@ -24,9 +24,7 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repo.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -150,16 +148,38 @@ public class ItemServiceImpl implements ItemService {
         } else {
             ownerItems = itemRepository.findAllByOwnerId(userId);
         }
-        List<ItemDto> listItemDto = new ArrayList<>();
-        for (Item item : ownerItems) {
-            ItemDto itemDto = itemMapper.toItemDto(item);
-            if (item.getOwner().getId().equals(userId)) {
-                addBookings(itemDto);
-            }
-            addComments(itemDto);
-            listItemDto.add(itemDto);
-        }
-        return listItemDto;
+
+        List<Long> itemIds = ownerItems.stream().map(Item::getId).collect(Collectors.toList());
+
+        // Получение всех комментариев для предметов
+        Map<Long, List<Comment>> comments = commentRepository.findAllByItemIdIn(itemIds)
+                .stream()
+                .collect(Collectors.groupingBy(comment -> comment.getItem().getId()));
+
+        // Получение всех предыдущих и следующих бронирований для предметов
+        Map<Long, Booking> lastBookings = bookingRepository.findLastBookingsByItemIds(itemIds, LocalDateTime.now(), BookingStatus.APPROVED)
+                .stream()
+                .collect(Collectors.toMap(booking -> booking.getItem().getId(), booking -> booking));
+
+        Map<Long, Booking> nextBookings = bookingRepository.findNextBookingsByItemIds(itemIds, LocalDateTime.now(), BookingStatus.APPROVED)
+                .stream()
+                .collect(Collectors.toMap(booking -> booking.getItem().getId(), booking -> booking));
+
+        return ownerItems.stream()
+                .map(item -> {
+                    ItemDto itemDto = itemMapper.toItemDto(item);
+                    if (item.getOwner().getId().equals(userId)) {
+                        itemDto.setLastBooking(bookingMapper.toBookingForItemDto(lastBookings.get(item.getId())));
+                        itemDto.setNextBooking(bookingMapper.toBookingForItemDto(nextBookings.get(item.getId())));
+                    }
+                    List<Comment> itemComments = comments.getOrDefault(item.getId(), Collections.emptyList());
+                    List<CommentDto> listCommentDto = itemComments.stream()
+                            .map(commentMapper::toCommentDto)
+                            .collect(Collectors.toList());
+                    itemDto.setComments(listCommentDto);
+                    return itemDto;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
