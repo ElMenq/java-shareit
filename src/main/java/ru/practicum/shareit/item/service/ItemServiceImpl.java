@@ -148,7 +148,6 @@ public class ItemServiceImpl implements ItemService {
         } else {
             ownerItems = itemRepository.findAllByOwnerId(userId);
         }
-
         List<Long> itemIds = ownerItems.stream().map(Item::getId).collect(Collectors.toList());
 
         // Получение всех комментариев для предметов
@@ -156,22 +155,27 @@ public class ItemServiceImpl implements ItemService {
                 .stream()
                 .collect(Collectors.groupingBy(comment -> comment.getItem().getId()));
 
-        // Получение всех предыдущих и следующих бронирований для предметов
-        Map<Long, Booking> lastBookings = bookingRepository.findLastBookingsByItemIds(itemIds, LocalDateTime.now(), BookingStatus.APPROVED)
-                .stream()
-                .collect(Collectors.toMap(booking -> booking.getItem().getId(), booking -> booking));
+        // Получение всех бронирований для предметов
+        List<Booking> allBookings = bookingRepository.findAllByItemIdInAndStatus(itemIds, BookingStatus.APPROVED);
 
-        Map<Long, Booking> nextBookings = bookingRepository.findNextBookingsByItemIds(itemIds, LocalDateTime.now(), BookingStatus.APPROVED)
-                .stream()
-                .collect(Collectors.toMap(booking -> booking.getItem().getId(), booking -> booking));
+        // Сгруппировать бронирования по itemId
+        Map<Long, List<Booking>> bookingsMap = allBookings.stream()
+                .collect(Collectors.groupingBy(booking -> booking.getItem().getId()));
 
         return ownerItems.stream()
                 .map(item -> {
                     ItemDto itemDto = itemMapper.toItemDto(item);
+
+                    // Найти последнее и следующее бронирование
+                    List<Booking> itemBookings = bookingsMap.getOrDefault(item.getId(), Collections.emptyList());
+                    Booking lastBooking = findLastBooking(itemBookings);
+                    Booking nextBooking = findNextBooking(itemBookings);
+
                     if (item.getOwner().getId().equals(userId)) {
-                        itemDto.setLastBooking(bookingMapper.toBookingForItemDto(lastBookings.get(item.getId())));
-                        itemDto.setNextBooking(bookingMapper.toBookingForItemDto(nextBookings.get(item.getId())));
+                        itemDto.setLastBooking(lastBooking != null ? bookingMapper.toBookingForItemDto(lastBooking) : null);
+                        itemDto.setNextBooking(nextBooking != null ? bookingMapper.toBookingForItemDto(nextBooking) : null);
                     }
+
                     List<Comment> itemComments = comments.getOrDefault(item.getId(), Collections.emptyList());
                     List<CommentDto> listCommentDto = itemComments.stream()
                             .map(commentMapper::toCommentDto)
@@ -180,6 +184,22 @@ public class ItemServiceImpl implements ItemService {
                     return itemDto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // Метод для нахождения последнего бронирования
+    private Booking findLastBooking(List<Booking> bookings) {
+        return bookings.stream()
+                .filter(booking -> booking.getStart().isBefore(LocalDateTime.now()))
+                .max(Comparator.comparing(Booking::getStart))
+                .orElse(null);
+    }
+
+    // Метод для нахождения следующего бронирования
+    private Booking findNextBooking(List<Booking> bookings) {
+        return bookings.stream()
+                .filter(booking -> booking.getStart().isAfter(LocalDateTime.now()))
+                .min(Comparator.comparing(Booking::getStart))
+                .orElse(null);
     }
 
     @Override
