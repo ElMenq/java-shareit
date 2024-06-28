@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
@@ -24,10 +25,11 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repo.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.springframework.data.domain.Sort.Direction.ASC;
+import static org.springframework.data.domain.Sort.Direction.DESC;
 
 @Slf4j
 @Service
@@ -150,13 +152,35 @@ public class ItemServiceImpl implements ItemService {
         } else {
             ownerItems = itemRepository.findAllByOwnerId(userId);
         }
+
+        List<Long> itemIds = ownerItems.stream().map(Item::getId).collect(Collectors.toList());
+
+        // Получение всех комментариев для предметов
+        Map<Long, List<Comment>> comments = commentRepository.findAllByItemIdIn(itemIds)
+                .stream()
+                .collect(Collectors.groupingBy(Comment::getId));
+
+        // Получение всех предыдущих и следующих бронирований для предметов
+        Map<Long, Booking> lastBookings = bookingRepository.findLastBookingsByItemIds(itemIds, LocalDateTime.now(), BookingStatus.APPROVED)
+                .stream()
+                .collect(Collectors.toMap(booking -> booking.getItem().getId(), booking -> booking));
+
+        Map<Long, Booking> nextBookings = bookingRepository.findNextBookingsByItemIds(itemIds, LocalDateTime.now(), BookingStatus.APPROVED)
+                .stream()
+                .collect(Collectors.toMap(booking -> booking.getItem().getId(), booking -> booking));
+
         List<ItemDto> listItemDto = new ArrayList<>();
         for (Item item : ownerItems) {
             ItemDto itemDto = itemMapper.toItemDto(item);
             if (item.getOwner().getId().equals(userId)) {
-                addBookings(itemDto);
+                itemDto.setLastBooking(bookingMapper.toBookingForItemDto(lastBookings.get(item.getId())));
+                itemDto.setNextBooking(bookingMapper.toBookingForItemDto(nextBookings.get(item.getId())));
             }
-            addComments(itemDto);
+            List<Comment> itemComments = comments.getOrDefault(item.getId(), Collections.emptyList());
+            List<CommentDto> listCommentDto = itemComments.stream()
+                    .map(commentMapper::toCommentDto)
+                    .collect(Collectors.toList());
+            itemDto.setComments(listCommentDto);
             listItemDto.add(itemDto);
         }
         return listItemDto;
