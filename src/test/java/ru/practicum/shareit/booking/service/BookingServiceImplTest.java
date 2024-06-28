@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -37,8 +38,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.ThrowableAssert.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -545,9 +545,9 @@ public class BookingServiceImplTest {
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findAllByBooker(any(), (Sort) any())).thenReturn(bookings);
+        int from = 0;
+        int size = 10;
+        when(bookingRepository.findAllByBooker(any(), any(PageRequest.class))).thenReturn(bookings);
         List<BookingDto> foundBookingsDto = bookingService.getUserBookings(
                 anotherUser.getId(),
                 "ALL",
@@ -675,9 +675,9 @@ public class BookingServiceImplTest {
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByBookerAndStartIsBeforeAndEndIsAfter(any(), any(), any(), (Sort) any()))
+        int from = 0;  // Использование значения по умолчанию
+        int size = 10; // Использование значения по умолчанию
+        when(bookingRepository.findByBookerAndStartIsBeforeAndEndIsAfter(any(), any(), any(), any(PageRequest.class)))
                 .thenReturn(bookings);
         List<BookingDto> foundBookingsDto = bookingService.getUserBookings(
                 anotherUser.getId(),
@@ -725,9 +725,9 @@ public class BookingServiceImplTest {
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByBookerAndEndIsBefore(any(), any(), (Sort) any()))
+        int from = 0;
+        int size = 10;
+        when(bookingRepository.findByBookerAndEndIsBefore(any(), any(), any(PageRequest.class)))
                 .thenReturn(bookings);
         List<BookingDto> foundBookingsDto = bookingService.getUserBookings(
                 anotherUser.getId(),
@@ -775,9 +775,9 @@ public class BookingServiceImplTest {
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByBookerAndStartIsAfter(any(), any(), (Sort) any()))
+        int from = 0;
+        int size = 10;
+        when(bookingRepository.findByBookerAndStartIsAfter(any(), any(), any(PageRequest.class)))
                 .thenReturn(bookings);
         List<BookingDto> foundBookingsDto = bookingService.getUserBookings(
                 anotherUser.getId(),
@@ -825,9 +825,9 @@ public class BookingServiceImplTest {
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByBookerAndStatusIs(any(), any(), (Sort) any()))
+        int from = 0; // не null
+        int size = 10; // не null
+        when(bookingRepository.findByBookerAndStatusIs(any(), eq(BookingStatus.WAITING), any(PageRequest.class)))
                 .thenReturn(bookings);
         List<BookingDto> foundBookingsDto = bookingService.getUserBookings(
                 anotherUser.getId(),
@@ -875,9 +875,9 @@ public class BookingServiceImplTest {
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByBookerAndStatusIs(any(), any(), (Sort) any()))
+        int from = 0; // не null
+        int size = 10; // не null
+        when(bookingRepository.findByBookerAndStatusIs(any(), eq(BookingStatus.REJECTED), any(PageRequest.class)))
                 .thenReturn(bookings);
         List<BookingDto> foundBookingsDto = bookingService.getUserBookings(
                 anotherUser.getId(),
