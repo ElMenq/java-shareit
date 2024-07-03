@@ -14,9 +14,7 @@ import ru.practicum.shareit.user.model.User;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@ExtendWith(MockitoExtension.class)
-@SpringBootTest
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class ItemMapperTest {
 
     @Autowired
