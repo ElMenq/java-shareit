@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
@@ -17,14 +18,13 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repo.CommentRepository;
 import ru.practicum.shareit.item.repo.ItemRepository;
-import ru.practicum.shareit.user.mapper.UserMapper;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.service.ItemRequestService;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.user.repo.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,12 +33,12 @@ import java.util.stream.Collectors;
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
-    private final UserService userService;
+    private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
+    private final ItemRequestService itemRequestService;
 
     private final ItemMapper itemMapper;
-    private final UserMapper userMapper;
     private final BookingMapper bookingMapper;
     private final CommentMapper commentMapper;
 
@@ -46,8 +46,13 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto addNewItem(long userId, ItemDto itemDto) {
         validate(itemDto);
         Item item = itemMapper.toItem(itemDto);
-        User owner = userMapper.toUser(userService.getUser(userId));
+        User owner = findUser(userId);
         item.setOwner(owner);
+        long requestId = itemDto.getRequestId();
+        if (requestId != 0) {
+            ItemRequest itemRequest = itemRequestService.findById(requestId);
+            item.setRequest(itemRequest);
+        }
         return itemMapper.toItemDto(itemRepository.save(item));
     }
 
@@ -71,7 +76,7 @@ public class ItemServiceImpl implements ItemService {
             throw new NotFoundException();
         }
         Item itemToUpdate = optionalItem.get();
-        User owner = userMapper.toUser(userService.getUser(userId));
+        User owner = findUser(userId);
         if (!itemToUpdate.getOwner().equals(owner)) {
             log.info("У предмета с id {} указан другой владелец {}, обращается пользователь {}",
                     itemId,
@@ -118,7 +123,6 @@ public class ItemServiceImpl implements ItemService {
                 LocalDateTime.now(),
                 BookingStatus.APPROVED);
         itemDto.setLastBooking(bookingMapper.toBookingForItemDto(lastBooking.orElse(null)));
-
         Optional<Booking> nextBooking = bookingRepository.findFirst1ByItemIdIsAndStartIsAfterAndStatusIsOrderByStartAsc(
                 itemId,
                 LocalDateTime.now(),
@@ -136,25 +140,80 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> getOwnerItems(long userId) {
-        List<Item> ownerItems = itemRepository.findAllByOwnerId(userId);
-        List<ItemDto> listItemDto = ownerItems.stream()
+    public List<ItemDto> getOwnerItems(long userId, Integer from, Integer size) {
+        List<Item> ownerItems;
+        if (from != null && size != null) {
+            validateSearchParameters(from, size);
+            ownerItems = itemRepository.findAllByOwnerId(userId, PageRequest.of(from / size, size));
+        } else {
+            ownerItems = itemRepository.findAllByOwnerId(userId);
+        }
+        List<Long> itemIds = ownerItems.stream().map(Item::getId).collect(Collectors.toList());
+
+        // Получение всех комментариев для предметов
+        Map<Long, List<Comment>> comments = commentRepository.findAllByItemIdIn(itemIds)
+                .stream()
+                .collect(Collectors.groupingBy(comment -> comment.getItem().getId()));
+
+        // Получение всех бронирований для предметов
+        List<Booking> allBookings = bookingRepository.findAllByItemIdInAndStatus(itemIds, BookingStatus.APPROVED);
+
+        // Сгруппировать бронирования по itemId
+        Map<Long, List<Booking>> bookingsMap = allBookings.stream()
+                .collect(Collectors.groupingBy(booking -> booking.getItem().getId()));
+
+        return ownerItems.stream()
                 .map(item -> {
                     ItemDto itemDto = itemMapper.toItemDto(item);
-                    addBookings(itemDto);
-                    addComments(itemDto);
+
+                    // Найти последнее и следующее бронирование
+                    List<Booking> itemBookings = bookingsMap.getOrDefault(item.getId(), Collections.emptyList());
+                    Booking lastBooking = findLastBooking(itemBookings);
+                    Booking nextBooking = findNextBooking(itemBookings);
+
+                    if (item.getOwner().getId().equals(userId)) {
+                        itemDto.setLastBooking(lastBooking != null ? bookingMapper.toBookingForItemDto(lastBooking) : null);
+                        itemDto.setNextBooking(nextBooking != null ? bookingMapper.toBookingForItemDto(nextBooking) : null);
+                    }
+
+                    List<Comment> itemComments = comments.getOrDefault(item.getId(), Collections.emptyList());
+                    List<CommentDto> listCommentDto = itemComments.stream()
+                            .map(commentMapper::toCommentDto)
+                            .collect(Collectors.toList());
+                    itemDto.setComments(listCommentDto);
                     return itemDto;
                 })
                 .collect(Collectors.toList());
-        return listItemDto;
+    }
+
+    // Метод для нахождения последнего бронирования
+    private Booking findLastBooking(List<Booking> bookings) {
+        return bookings.stream()
+                .filter(booking -> booking.getStart().isBefore(LocalDateTime.now()))
+                .max(Comparator.comparing(Booking::getStart))
+                .orElse(null);
+    }
+
+    // Метод для нахождения следующего бронирования
+    private Booking findNextBooking(List<Booking> bookings) {
+        return bookings.stream()
+                .filter(booking -> booking.getStart().isAfter(LocalDateTime.now()))
+                .min(Comparator.comparing(Booking::getStart))
+                .orElse(null);
     }
 
     @Override
-    public List<ItemDto> search(long userId, String text) {
+    public List<ItemDto> search(long userId, String text, Integer from, Integer size) {
         if (text.isBlank()) {
             return new ArrayList<>();
         }
-        List<Item> foundItems = itemRepository.search(text);
+        List<Item> foundItems;
+        if (from != null && size != null) {
+            validateSearchParameters(from, size);
+            foundItems = itemRepository.search(text, PageRequest.of(from / size, size));
+        } else {
+            foundItems = itemRepository.search(text);
+        }
         return foundItems
                 .stream()
                 .map(itemMapper::toItemDto)
@@ -174,7 +233,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public CommentDto addComment(long userId, long itemId, CommentDto commentDto) {
-        User author = userMapper.toUser(userService.getUser(userId));
+        User author = findUser(userId);
         Item item = findItem(itemId);
         Optional<Booking> booking = bookingRepository.findFirst1ByItemIdAndBookerIdAndEndIsBefore(itemId, userId, LocalDateTime.now());
         if (booking.isEmpty()) {
@@ -201,4 +260,26 @@ public class ItemServiceImpl implements ItemService {
                 itemId);
         return commentMapper.toCommentDto(savedComment);
     }
+
+    private User findUser(long userId) {
+        if (userId == 0) {
+            throw new ValidationException();
+        }
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isEmpty()) {
+            throw new NotFoundException();
+        }
+        return user.get();
+    }
+
+    private void validateSearchParameters(int from, int size) {
+        if (from < 0) {
+            log.info("Параметр запроса 'from' должен быть больше или равен 0, указано значение {}", from);
+            throw new ValidationException();
+        } else if (size <= 0) {
+            log.info("Параметр запроса 'size' должен быть больше 0, указано значение {}", size);
+            throw new ValidationException();
+        }
+    }
+
 }
