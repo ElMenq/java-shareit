@@ -13,7 +13,7 @@ public class ItemRequestShortDto {
     private long id;
 
     @NotBlank
-    @Size
+    @Size(min = 1, max = 255)
     private String description;
 
 }
