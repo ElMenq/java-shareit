@@ -11,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
@@ -913,20 +912,28 @@ public class BookingServiceImplTest {
 
     @Test
     void getStateAllItemsOwnerBookingsWithSort() {
+        // Мокирование пользователей и предметов
         when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
         when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
 
+        // Сохранение бронирования
         when(bookingRepository.save(any())).thenReturn(booking);
         BookingDto savedBooking = bookingService.addNewBooking(anotherUser.getId(), bookingFromUser);
         assertEquals(bookingDto, savedBooking);
 
+        // Сохранение другого бронирования
         when(bookingRepository.save(any())).thenReturn(anotherBooking);
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findAllByItemOwnerIs(any(), (Sort) any())).thenReturn(bookings);
+        // Задание значений для from и size
+        Integer from = 0;
+        Integer size = 10;
+
+        // Мокирование репозитория бронирований для состояния ALL с пагинацией
+        when(bookingRepository.findAllByItemOwnerIs(any(), any(PageRequest.class))).thenReturn(bookings);
+
+        // Вызов сервиса и проверка результатов
         List<BookingDto> foundBookingsDto = bookingService.getItemsOwnerBookings(
                 anotherUser.getId(),
                 "ALL",
@@ -1001,10 +1008,12 @@ public class BookingServiceImplTest {
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByItemOwnerAndStartIsBeforeAndEndIsAfter(any(), any(), any(), (Sort) any()))
+        Integer from = 0;
+        Integer size = 10;
+
+        when(bookingRepository.findByItemOwnerAndStartIsBeforeAndEndIsAfter(any(), any(), any(), any(PageRequest.class)))
                 .thenReturn(bookings);
+
         List<BookingDto> foundBookingsDto = bookingService.getItemsOwnerBookings(
                 anotherUser.getId(),
                 "CURRENT",
@@ -1040,21 +1049,29 @@ public class BookingServiceImplTest {
 
     @Test
     void getStatePastItemsOwnerBookingsWithSort() {
+        // Мокирование пользователей и предметов
         when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
         when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
 
+        // Сохранение бронирования
         when(bookingRepository.save(any())).thenReturn(booking);
         BookingDto savedBooking = bookingService.addNewBooking(anotherUser.getId(), bookingFromUser);
         assertEquals(bookingDto, savedBooking);
 
+        // Сохранение другого бронирования
         when(bookingRepository.save(any())).thenReturn(anotherBooking);
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByItemOwnerAndEndIsBefore(any(), any(), (Sort) any()))
+        // Задание значений для from и size
+        Integer from = 0;
+        Integer size = 10;
+
+        // Мокирование репозитория бронирований для состояния PAST
+        when(bookingRepository.findByItemOwnerAndEndIsBefore(any(), any(), any(PageRequest.class)))
                 .thenReturn(bookings);
+
+        // Вызов сервиса и проверка результатов
         List<BookingDto> foundBookingsDto = bookingService.getItemsOwnerBookings(
                 anotherUser.getId(),
                 "PAST",
@@ -1101,10 +1118,12 @@ public class BookingServiceImplTest {
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByItemOwnerAndStartIsAfter(any(), any(), (Sort) any()))
+        Integer from = 0;
+        Integer size = 10;
+
+        when(bookingRepository.findByItemOwnerAndStartIsAfter(any(), any(), any(PageRequest.class)))
                 .thenReturn(bookings);
+
         List<BookingDto> foundBookingsDto = bookingService.getItemsOwnerBookings(
                 anotherUser.getId(),
                 "FUTURE",
@@ -1151,10 +1170,12 @@ public class BookingServiceImplTest {
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByItemOwnerAndStatusIs(any(), any(), (Sort) any()))
+        Integer from = 0;
+        Integer size = 10;
+
+        when(bookingRepository.findByItemOwnerAndStatusIs(any(), eq(BookingStatus.WAITING), any(PageRequest.class)))
                 .thenReturn(bookings);
+
         List<BookingDto> foundBookingsDto = bookingService.getItemsOwnerBookings(
                 anotherUser.getId(),
                 "WAITING",
@@ -1190,21 +1211,29 @@ public class BookingServiceImplTest {
 
     @Test
     void getStateRejectedItemsOwnerBookingsWithSort() {
+        // Мокирование пользователей и предметов
         when(userRepository.findById(anyLong())).thenReturn(Optional.ofNullable(user));
         when(itemRepository.findById(anyLong())).thenReturn(Optional.ofNullable(item));
 
+        // Сохранение бронирования
         when(bookingRepository.save(any())).thenReturn(booking);
         BookingDto savedBooking = bookingService.addNewBooking(anotherUser.getId(), bookingFromUser);
         assertEquals(bookingDto, savedBooking);
 
+        // Сохранение другого бронирования
         when(bookingRepository.save(any())).thenReturn(anotherBooking);
         BookingDto savedAnotherBooking = bookingService.addNewBooking(anotherUser.getId(), anotherBookingFromUser);
         assertEquals(anotherBookingDto, savedAnotherBooking);
 
-        Integer from = null;
-        Integer size = null;
-        when(bookingRepository.findByItemOwnerAndStatusIs(any(), any(), (Sort) any()))
+        // Задание значений для from и size
+        Integer from = 0;
+        Integer size = 10;
+
+        // Мокирование репозитория бронирований для состояния REJECTED
+        when(bookingRepository.findByItemOwnerAndStatusIs(any(), eq(BookingStatus.REJECTED), any(PageRequest.class)))
                 .thenReturn(bookings);
+
+        // Вызов сервиса и проверка результатов
         List<BookingDto> foundBookingsDto = bookingService.getItemsOwnerBookings(
                 anotherUser.getId(),
                 "REJECTED",

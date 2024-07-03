@@ -230,91 +230,49 @@ public class BookingServiceImpl implements BookingService {
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Unknown state: UNSUPPORTED_STATUS");
         }
-        List<Booking> bookings = new ArrayList<>();
+
+        List<Booking> bookings;
+        PageRequest pageRequest = PageRequest.of(from / size, size, Sort.by("end").descending());
+
         switch (status) {
             case ALL:
-                if (from != null && size != null) {
-                    validateSearchParameters(from, size);
-                    bookings = bookingRepository.findAllByItemOwnerIs(user,
-                            PageRequest.of(from / size, size, Sort.by("end").descending()));
-                } else {
-                    bookings = bookingRepository.findAllByItemOwnerIs(user,
-                            Sort.by("end").descending());
-                }
+                bookings = bookingRepository.findAllByItemOwnerIs(user, pageRequest);
                 break;
             case CURRENT:
-                if (from != null && size != null) {
-                    validateSearchParameters(from, size);
-                    bookings = bookingRepository.findByItemOwnerAndStartIsBeforeAndEndIsAfter(
-                            user,
-                            LocalDateTime.now(),
-                            LocalDateTime.now(),
-                            PageRequest.of(from / size, size, Sort.by("end").descending()));
-                } else {
-                    bookings = bookingRepository.findByItemOwnerAndStartIsBeforeAndEndIsAfter(
-                            user,
-                            LocalDateTime.now(),
-                            LocalDateTime.now(),
-                            Sort.by("end").descending());
-                }
+                bookings = bookingRepository.findByItemOwnerAndStartIsBeforeAndEndIsAfter(
+                        user,
+                        LocalDateTime.now(),
+                        LocalDateTime.now(),
+                        pageRequest);
                 break;
             case PAST:
-                if (from != null && size != null) {
-                    validateSearchParameters(from, size);
-                    bookings = bookingRepository.findByItemOwnerAndEndIsBefore(
-                            user,
-                            LocalDateTime.now(),
-                            PageRequest.of(from / size, size, Sort.by("end").descending()));
-                } else {
-                    bookings = bookingRepository.findByItemOwnerAndEndIsBefore(
-                            user,
-                            LocalDateTime.now(),
-                            Sort.by("end").descending());
-                }
+                bookings = bookingRepository.findByItemOwnerAndEndIsBefore(
+                        user,
+                        LocalDateTime.now(),
+                        pageRequest);
                 break;
             case FUTURE:
-                if (from != null && size != null) {
-                    validateSearchParameters(from, size);
-                    bookings = bookingRepository.findByItemOwnerAndStartIsAfter(
-                            user,
-                            LocalDateTime.now(),
-                            PageRequest.of(from / size, size, Sort.by("end").descending()));
-                } else {
-                    bookings = bookingRepository.findByItemOwnerAndStartIsAfter(
-                            user,
-                            LocalDateTime.now(),
-                            Sort.by("end").descending());
-                }
+                bookings = bookingRepository.findByItemOwnerAndStartIsAfter(
+                        user,
+                        LocalDateTime.now(),
+                        pageRequest);
                 break;
             case WAITING:
-                if (from != null && size != null) {
-                    validateSearchParameters(from, size);
-                    bookings = bookingRepository.findByItemOwnerAndStatusIs(
-                            user,
-                            BookingStatus.WAITING,
-                            PageRequest.of(from / size, size, Sort.by("end").descending()));
-                } else {
-                    bookings = bookingRepository.findByItemOwnerAndStatusIs(
-                            user,
-                            BookingStatus.WAITING,
-                            Sort.by("end").descending());
-                }
+                bookings = bookingRepository.findByItemOwnerAndStatusIs(
+                        user,
+                        BookingStatus.WAITING,
+                        pageRequest);
                 break;
             case REJECTED:
-                if (from != null && size != null) {
-                    validateSearchParameters(from, size);
-                    bookings = bookingRepository.findByItemOwnerAndStatusIs(
-                            user,
-                            BookingStatus.REJECTED,
-                            PageRequest.of(from / size, size, Sort.by("end").descending()));
-                } else {
-                    bookings = bookingRepository.findByItemOwnerAndStatusIs(
-                            user,
-                            BookingStatus.REJECTED,
-                            Sort.by("end").descending());
-                }
+                bookings = bookingRepository.findByItemOwnerAndStatusIs(
+                        user,
+                        BookingStatus.REJECTED,
+                        pageRequest);
                 break;
+            default:
+                throw new RuntimeException("Unknown state: " + state);
         }
+
         return bookings.stream()
                 .map(bookingMapper::toBookingDto)
                 .collect(Collectors.toList());
