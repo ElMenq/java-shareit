@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.booking.cons.HttpHeadersConstants;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingFromUserDto;
 import ru.practicum.shareit.booking.service.BookingService;
@@ -22,14 +23,14 @@ public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping
-    public ResponseEntity<BookingDto> add(@RequestHeader(value = "X-Sharer-User-Id") long userId,
+    public ResponseEntity<BookingDto> add(@RequestHeader(value = HttpHeadersConstants.X_SHARER_USER_ID) long userId,
                                           @RequestBody BookingFromUserDto bookingFromUser) {
         log.info("Received POST-request at /bookings endpoint from user id={}", userId);
         return ResponseEntity.ok().body(bookingService.addNewBooking(userId, bookingFromUser));
     }
 
     @PatchMapping("/{bookingId}")
-    public ResponseEntity<BookingDto> update(@RequestHeader(value = "X-Sharer-User-Id") long userId,
+    public ResponseEntity<BookingDto> update(@RequestHeader(value = HttpHeadersConstants.X_SHARER_USER_ID) long userId,
                                              @PathVariable long bookingId,
                                              @RequestParam String approved) {
         log.info("Received PATCH-request at /bookings/{} endpoint from user id={}", bookingId, userId);
@@ -37,14 +38,14 @@ public class BookingController {
     }
 
     @GetMapping("/{bookingId}")
-    public ResponseEntity<BookingDto> get(@RequestHeader(value = "X-Sharer-User-Id") long userId,
+    public ResponseEntity<BookingDto> get(@RequestHeader(value = HttpHeadersConstants.X_SHARER_USER_ID) long userId,
                                           @PathVariable long bookingId) {
         log.info("Received GET-request at /bookings/{} endpoint from user id={}", userId, bookingId);
         return ResponseEntity.ok().body(bookingService.getBooking(userId, bookingId));
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingDto>> getUserBookings(@RequestHeader(value = "X-Sharer-User-Id") long userId,
+    public ResponseEntity<List<BookingDto>> getUserBookings(@RequestHeader(value = HttpHeadersConstants.X_SHARER_USER_ID) long userId,
                                                             @RequestParam(defaultValue = "ALL") String state,
                                                             @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
                                                             @Positive @RequestParam(defaultValue = "10") Integer size) {
@@ -54,7 +55,7 @@ public class BookingController {
     }
 
     @GetMapping("/owner")
-    public ResponseEntity<List<BookingDto>> getItemsOwnerBookings(@RequestHeader(value = "X-Sharer-User-Id") long userId,
+    public ResponseEntity<List<BookingDto>> getItemsOwnerBookings(@RequestHeader(value = HttpHeadersConstants.X_SHARER_USER_ID) long userId,
                                                                   @RequestParam(defaultValue = "ALL") String state,
                                                                   @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
                                                                   @Positive @RequestParam(defaultValue = "10") Integer size) {
